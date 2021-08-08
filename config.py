@@ -6,6 +6,7 @@ common_config = {
     'map_to_seq_hidden': 64,
     'rnn_hidden': 256,
     'leaky_relu': False,
+    'resnet' : False,
 }
 
 train_config = {

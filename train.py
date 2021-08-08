@@ -6,7 +6,7 @@ import torch.optim as optim
 from torch.nn import CTCLoss
 
 from dataset import TextDataset, text_collate_fn
-from model import CRNN
+from model import CRNN,ResNet18,ResidualBlock
 from evaluate import evaluate
 from config import train_config as config
 
@@ -67,7 +67,10 @@ def main():
         collate_fn=text_collate_fn)
 
     num_class = len(TextDataset.LABEL2CHAR) + 1 # char to label start from 1
-    crnn = CRNN(1, img_height, img_width, num_class,
+    if config['resnet']:
+        crnn = ResNet18(ResidualBlock,1, img_height, img_width,num_class)
+    else:        
+        crnn = CRNN(1, img_height, img_width, num_class,
                 map_to_seq_hidden=config['map_to_seq_hidden'],
                 rnn_hidden=config['rnn_hidden'],
                 leaky_relu=config['leaky_relu'])

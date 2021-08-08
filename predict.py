@@ -4,7 +4,7 @@ from tqdm import tqdm
 from torch.utils.data import DataLoader
 from config import common_config as config
 from dataset import TextDataset, text_collate_fn,PredictDataset
-from model import CRNN
+from model import CRNN,ResNet18,ResidualBlock
 from ctc_decoder import ctc_decode 
 from argparse import ArgumentParser
 
@@ -55,7 +55,7 @@ def main():
                         help='set beam size (default: 10)')
     parser.add_argument('--decode_method', type=str, default='beam_search',
                         metavar='greedy, beam_search ,prefix_beam_search' ,help="set decode method (default: beam_search)")
-    parser.add_argument('--checkpoint', type=str, default='./checkpoints/crnn_002000_loss9.920046997070312.pt',
+    parser.add_argument('--checkpoint', type=str, default='./checkpoints/crnn_002000_loss10.827691650390625.pt',
                         help='Reload checkpoint ')
 
     args = parser.parse_args()
@@ -76,10 +76,13 @@ def main():
         shuffle=False)
 
     num_class = len(TextDataset.LABEL2CHAR) + 1
-    crnn = CRNN(1, img_height, img_width, num_class,
-                map_to_seq_hidden=config['map_to_seq_hidden'],
-                rnn_hidden=config['rnn_hidden'],
-                leaky_relu=config['leaky_relu'])
+    if config['resnet']:
+        crnn = ResNet18(ResidualBlock,1, img_height, img_width,num_class)
+    else:
+        crnn = CRNN(1, img_height, img_width, num_class,
+                    map_to_seq_hidden=config['map_to_seq_hidden'],
+                    rnn_hidden=config['rnn_hidden'],
+                    leaky_relu=config['leaky_relu'])
 
     crnn.load_state_dict(torch.load(args.checkpoint, map_location=device))
     crnn.to(device)

@@ -50,7 +50,7 @@ CRNN模型主要由以下三部分組成：
 ### convolution Layers
 **預處理->卷積運算->提取序列特徵**
 
-對輸入圖像先做了縮放處理，把所有輸入圖像縮放到相同寬度與高度，結構類似於VGG，由convolution,Maxpooling所組成
+對輸入圖像先做了縮放處理，把所有輸入圖像縮放到相同寬度與高度，結構類似於VGG，由convolution,Maxpooling所組成，而後也多加了Resnet 模型作為backbone可供替換
 
 提取特徵序列中的向量是在特徵圖上從左到右按照順序生成的，用於作為循環層的輸入，每個特徵向量表示了圖像上一定寬度上的特徵，默認的寬度是1，也就是單個像素。由於CRNN已將輸入圖像縮放到同樣高度了，因此只需按照一定的寬度提取特徵即可
 
@@ -90,6 +90,7 @@ https://hackmd.io/@shaoeChen/H1y-dM6TM?type=view#3-3Beam-search
 
 ## CTC 
 **參考**
+https://www.ycc.idv.tw/crnn-ctc.html
 https://distill.pub/2017/ctc/
 https://narcissuscyn.github.io/2018/04/14/CTC-loss/
 
@@ -119,14 +120,19 @@ CTCLoss 對input與target可能對齊的機率進行求和，產生一個損失�
 
 ## Training
 `python train.py`
+
 you can change hyperparameter in `config.py`
+### Special Skills
+1. Training Resnet as backbone insted of VGG -> config.py common_config['resnet']= True 
 ## Testing
 `python predict.py --checkpoint XXX.pt`
+
 you can change hyperparameter in `predict.py`
 
 ## Todo
 * json讀入 data 到dataloader，圖片Resize長寬及預處理方法選擇
 * 加入pretrain model 訓練
+* lstm+ attention
 * Decoded Method:
     * greedy
     * beam_search (beam_size=10)
@@ -134,4 +140,15 @@ you can change hyperparameter in `predict.py`
 * CTC Decode優化(beam search) 
     * https://hackmd.io/@shaoeChen/H1y-dM6TM?type=view#3-4Refinements-to-beam-search
 * optimizer: adam , lr = onecyclelr ,leaky_relu ,dropout
+* ensemble
+* Preprocessing
+    * Remove the noise from the image
+    * Remove the complex background from the image
+    * Handle the different lightning condition in the image
+## Generate synthetic dataset for Chinese OCR.
+* https://github.com/wang-tf/Chinese_OCR_synthetic_data
 ## Reference
+[1] https://nanonets.com/blog/deep-learning-ocr/
+[2] https://github.com/GitYCC/crnn-pytorch
+[3] https://blog.csdn.net/weixin_40546602/article/details/102778029
+[4] https://github.com/wavce/cv_papers/blob/master/OCR/WhatIsWrongInSTR.md
