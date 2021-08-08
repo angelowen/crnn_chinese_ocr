@@ -149,6 +149,9 @@ you can change hyperparameter in `predict.py`
 * https://github.com/wang-tf/Chinese_OCR_synthetic_data
 ## Reference
 [1] https://nanonets.com/blog/deep-learning-ocr/
+
 [2] https://github.com/GitYCC/crnn-pytorch
+
 [3] https://blog.csdn.net/weixin_40546602/article/details/102778029
+
 [4] https://github.com/wavce/cv_papers/blob/master/OCR/WhatIsWrongInSTR.md
