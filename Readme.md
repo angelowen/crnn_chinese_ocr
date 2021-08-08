@@ -4,16 +4,16 @@ The implementation of CRNN (CNN+GRU/LSTM+CTC) for chinese text recognition.
 
 模型採用CRNN（Convolutional Recurrent Neural Network，卷積循環神經網絡）作為backbone，參考論文《An End-to-End Trainable Neural Network for Image-based Sequence Recognition and ItsApplication to Scene Text Recognition》提出的方法，解決基於圖像的場景文字序列識別問題，其特點是，
 
-（1）可以進行end-to-end的訓練
-（2）不需要對樣本數據進行字符分割，可識別任意長度的文本序列
-（3）模型速度快、性能好，並且模型很小（參數少）
+1. 可以進行end-to-end的訓練
+2. 不需要對樣本數據進行字符分割，可識別任意長度的文本序列
+3. 模型速度快、性能好，並且模型很小（參數少）
 
 ## 模型架構
 ![](https://i.imgur.com/e5gmovf.png)
 CRNN模型主要由以下三部分組成：
-（1）convolution Layers(CNN)：從輸入圖像中提取出特徵序列
-（2）Recurrent Layers(Lstm/Gru)：預測從卷積層獲取的特徵序列的標籤分布；
-（3）Transcription Layers(CTC)：把從循環層獲取的標籤分布通過去重、整合等操作轉換成最終的識別結果。
+1. convolution Layers(CNN)：從輸入圖像中提取出特徵序列
+2. Recurrent Layers(Lstm/Gru)：預測從卷積層獲取的特徵序列的標籤分布；
+3. Transcription Layers(CTC)：把從循環層獲取的標籤分布通過去重、整合等操作轉換成最終的識別結果。
 ### CNN + LSTM 架構圖
 
 ```
@@ -66,6 +66,7 @@ CRNN模型主要由以下三部分組成：
 在CRNN模型中雙向LSTM網絡層的最後連接上一個CTC模型，從而做到了端對端的識別。所謂CTC模型（Connectionist Temporal Classification，聯接時間分類），主要用於解決輸入數據與給定標籤的對齊問題，可用於執行end-to-end的訓練，輸出不定長的序列結果
 
 由於輸入的自然場景的文字圖像，會因字符間隔、圖像變形等問題，導致同個文字有不同的表現形式，但實際上都是同一個詞，
+
 ![](https://i.imgur.com/MvLmUFB.png)
 
 而引入CTC就是主要解決這個問題，通過CTC模型訓練後，對結果中去掉間隔字符、去掉重複字符（如果同個字符連續出現，則表示只有1個字符，如果中間有間隔字符，則表示該字符出現多次）
