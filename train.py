@@ -21,7 +21,8 @@ def train_batch(crnn, data, optimizer, criterion, device):
     batch_size = images.size(0)
     input_lengths = torch.LongTensor([logits.size(0)] * batch_size)
     target_lengths = torch.flatten(target_lengths)
-
+    # calculate loss between output and target
+    # 藉由輸入每一個橫向pixel的機率值，計算可能變成target的valid alignment 機率值，並將其相加作為loss
     loss = criterion(log_probs, targets, input_lengths, target_lengths)
 
     optimizer.zero_grad()
@@ -58,14 +59,14 @@ def main():
         dataset=train_dataset,
         batch_size=train_batch_size,
         shuffle=True,
-        collate_fn=text_collate_fn)###########
+        collate_fn=text_collate_fn)
     valid_loader = DataLoader(
         dataset=valid_dataset,
         batch_size=eval_batch_size,
         shuffle=True,
-        collate_fn=text_collate_fn)###########
+        collate_fn=text_collate_fn)
 
-    num_class = len(TextDataset.LABEL2CHAR) + 1 ##### +1 ??
+    num_class = len(TextDataset.LABEL2CHAR) + 1 # char to label start from 1
     crnn = CRNN(1, img_height, img_width, num_class,
                 map_to_seq_hidden=config['map_to_seq_hidden'],
                 rnn_hidden=config['rnn_hidden'],

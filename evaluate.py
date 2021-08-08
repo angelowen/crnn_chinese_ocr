@@ -6,7 +6,6 @@ from tqdm import tqdm
 from dataset import TextDataset, text_collate_fn
 from model import CRNN
 from ctc_decoder import ctc_decode
-from config import evaluate_config as config
 
 torch.backends.cudnn.enabled = False
 
@@ -46,6 +45,7 @@ def evaluate(crnn, dataloader, criterion,
             tot_count += batch_size
             tot_loss += loss.item()
             target_length_counter = 0
+            # evaluate the correctioness between predict words and read words
             for pred, target_length in zip(preds, target_lengths):
                 real = reals[target_length_counter:target_length_counter + target_length]
                 target_length_counter += target_length
@@ -63,44 +63,3 @@ def evaluate(crnn, dataloader, criterion,
         'wrong_cases': wrong_cases
     }
     return evaluation
-
-
-def main():
-    eval_batch_size = config['eval_batch_size']
-    cpu_workers = config['cpu_workers']
-    reload_checkpoint = config['reload_checkpoint']
-
-    img_height = config['img_height']
-    img_width = config['img_width']
-
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    print(f'device: {device}')
-
-    test_dataset = TextDataset(root_dir=config['data_dir'], 
-                                   img_height=img_height, img_width=img_width)
-
-    test_loader = DataLoader(
-        dataset=test_dataset,
-        batch_size=eval_batch_size,
-        shuffle=False,
-        collate_fn=text_collate_fn)
-
-    num_class = len(TextDataset.LABEL2CHAR) + 1
-    crnn = CRNN(1, img_height, img_width, num_class,
-                map_to_seq_hidden=config['map_to_seq_hidden'],
-                rnn_hidden=config['rnn_hidden'],
-                leaky_relu=config['leaky_relu'])
-    crnn.load_state_dict(torch.load(reload_checkpoint, map_location=device))
-    crnn.to(device)
-
-    criterion = CTCLoss(reduction='sum')
-    criterion.to(device)
-
-    evaluation = evaluate(crnn, test_loader, criterion,
-                          decode_method=config['decode_method'],
-                          beam_size=config['beam_size'])
-    print('test_evaluation: loss={loss}, acc={acc}'.format(**evaluation))
-
-
-if __name__ == '__main__':
-    main()

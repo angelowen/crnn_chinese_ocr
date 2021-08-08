@@ -1,6 +1,6 @@
 
 common_config = {
-    'data_dir': 'data',
+    'data_dir': './data',
     'img_width': 200,
     'img_height': 64,
     'map_to_seq_hidden': 64,
@@ -25,11 +25,3 @@ train_config = {
 }
 train_config.update(common_config)
 
-evaluate_config = {
-    'eval_batch_size': 512,
-    'cpu_workers': 4,
-    'reload_checkpoint': 'checkpoints/crnn_synth90k.pt',
-    'decode_method': 'beam_search',
-    'beam_size': 10,
-}
-evaluate_config.update(common_config)

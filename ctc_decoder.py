@@ -7,7 +7,7 @@ from scipy.special import logsumexp  # log(p1 + p2) = logsumexp([log_p1, log_p2]
 NINF = -1 * float('inf')
 DEFAULT_EMISSION_THRESHOLD = 0.01
 
-
+# merge same labels and delete blank
 def _reconstruct(labels, blank=0):
     new_labels = []
     # merge same labels

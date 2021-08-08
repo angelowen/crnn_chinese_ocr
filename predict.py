@@ -1,22 +1,12 @@
-"""Usage: predict.py [-m MODEL] [-s BS] [-d DECODE] [-b BEAM] [IMAGE ...]
-
--h, --help    show this
--m MODEL     model file [default: ./checkpoints/crnn_004000_loss15.495193481445312.pt]
--s BS       batch size [default: 256]
--d DECODE    decode method (greedy, beam_search or prefix_beam_search) [default: beam_search]
--b BEAM   beam size [default: 10]
-
-"""
 from docopt import docopt
 import torch
 from tqdm import tqdm
 from torch.utils.data import DataLoader
-
 from config import common_config as config
 from dataset import TextDataset, text_collate_fn,PredictDataset
 from model import CRNN
 from ctc_decoder import ctc_decode 
-
+from argparse import ArgumentParser
 
 def predict(crnn, dataloader, label2char, decode_method, beam_size):
     crnn.eval()
@@ -28,10 +18,10 @@ def predict(crnn, dataloader, label2char, decode_method, beam_size):
             device = 'cuda' if next(crnn.parameters()).is_cuda else 'cpu'
 
             images = data.to(device)
-
+            # cnn + rnn output logits, and find max of logits 
             logits = crnn(images)
             log_probs = torch.nn.functional.log_softmax(logits, dim=2)
-
+            # set logits as ctc_decode input
             preds = ctc_decode(log_probs, method=decode_method, beam_size=beam_size,
                                label2char=label2char)
             all_preds += preds
@@ -50,7 +40,6 @@ def show_result(paths, preds):
 
 
 def main():
-    arguments = docopt(__doc__)
 
     images = []
     with open('data/test.txt', 'r') as fr:
@@ -58,23 +47,32 @@ def main():
                 path = line.strip().split(' ')[0]
                 images.append(path)
 
-    reload_checkpoint = arguments['-m']
-    batch_size = int(arguments['-s'])
-    decode_method = arguments['-d']
-    beam_size = int(arguments['-b'])
+    parser = ArgumentParser()
+    # dataset setting
+    parser.add_argument('--batch_size', type=int, default=256,
+                        help='set the batch size (default: 256)')
+    parser.add_argument('--beam_size', type=int, default=10,
+                        help='set beam size (default: 10)')
+    parser.add_argument('--decode_method', type=str, default='beam_search',
+                        metavar='greedy, beam_search ,prefix_beam_search' ,help="set decode method (default: beam_search)")
+    parser.add_argument('--checkpoint', type=str, default='./checkpoints/crnn_002000_loss9.920046997070312.pt',
+                        help='Reload checkpoint ')
+
+    args = parser.parse_args()
 
     img_height = config['img_height']
     img_width = config['img_width']
 
+
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     print(f'device: {device}')
 
-    predict_dataset = PredictDataset(root_dir = './data',txt_path='test.txt'
+    predict_dataset = PredictDataset(root_dir = config['data_dir'], txt_path='test.txt'
                                       ,img_height=img_height, img_width=img_width)
 
     predict_loader = DataLoader(
         dataset=predict_dataset,
-        batch_size=batch_size,
+        batch_size=args.batch_size,
         shuffle=False)
 
     num_class = len(TextDataset.LABEL2CHAR) + 1
@@ -82,12 +80,13 @@ def main():
                 map_to_seq_hidden=config['map_to_seq_hidden'],
                 rnn_hidden=config['rnn_hidden'],
                 leaky_relu=config['leaky_relu'])
-    crnn.load_state_dict(torch.load(reload_checkpoint, map_location=device))
+
+    crnn.load_state_dict(torch.load(args.checkpoint, map_location=device))
     crnn.to(device)
 
     preds = predict(crnn, predict_loader, TextDataset.LABEL2CHAR,
-                    decode_method=decode_method,
-                    beam_size=beam_size)
+                    decode_method=args.decode_method,
+                    beam_size=args.beam_size)
 
     show_result(images, preds)
 
