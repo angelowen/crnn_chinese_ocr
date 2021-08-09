@@ -1,6 +1,7 @@
+[TOC] 
 # Chinese ocr based on crnn(繁體中文文字辨識)
 The implementation of CRNN (CNN+GRU/LSTM+CTC) for chinese text recognition.
-# CRNN
+## CRNN
 
 模型採用CRNN（Convolutional Recurrent Neural Network，卷積循環神經網絡）作為backbone，參考論文《An End-to-End Trainable Neural Network for Image-based Sequence Recognition and ItsApplication to Scene Text Recognition》提出的方法，解決基於圖像的場景文字序列識別問題，其特點是，
 
@@ -8,7 +9,7 @@ The implementation of CRNN (CNN+GRU/LSTM+CTC) for chinese text recognition.
 2. 不需要對樣本數據進行字符分割，可識別任意長度的文本序列
 3. 模型速度快、性能好，並且模型很小（參數少）
 
-## 模型架構
+### 模型架構
 ![](https://i.imgur.com/e5gmovf.png)
 CRNN模型主要由以下三部分組成：
 1. convolution Layers(CNN)：從輸入圖像中提取出特徵序列
