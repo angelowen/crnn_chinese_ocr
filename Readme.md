@@ -7,7 +7,11 @@ Table of contents
       * [模型架構](#模型架構)
       * [流程圖](#流程圖)
    * [STN](#tSTN)
-   * [Usage](#quick demo)
+   * [Demo](#Demo)
+   * [Training](#Training)
+   * [Testing](#Testing)
+   * [Todo](#Todo)
+   * [Reference](#Reference)
    
 <!--te-->
 
@@ -176,7 +180,7 @@ $Aθ$ 代表的是仿射變換矩陣。其中的成員$θ_i$由localisation netw
 
 反向傳播過程，誤差可以傳播到輸入feature map（公式6），可以傳播到採樣格點坐標(sampling grid coordinates)（公式7），還可以傳播到變換參數 θ .
 
-## quick demo
+## Demo
 1. `unzip data.zip`
 2. `python train.py`
 3. `python predict.py --checkpoint XXX.pt`
