@@ -9,14 +9,21 @@ from dataset import TextDataset, text_collate_fn
 from model import CRNN,ResNet18,ResidualBlock
 from evaluate import evaluate
 from config import train_config as config
-
+from utils import TPSSpatialTransformerNetwork
 
 def train_batch(crnn, data, optimizer, criterion, device):
     crnn.train()
     images, targets, target_lengths = [d.to(device) for d in data]
 
+    if config['tps-stn']:
+        batch,channel,h,w =images.shape
+        images = images.permute(0,1,3,2)
+        tps = TPSSpatialTransformerNetwork(6, (w, h), (w, h), channel).cuda()
+        images = tps(images)
+
     logits = crnn(images)
     log_probs = torch.nn.functional.log_softmax(logits, dim=2)
+
 
     batch_size = images.size(0)
     input_lengths = torch.LongTensor([logits.size(0)] * batch_size)
@@ -24,6 +31,7 @@ def train_batch(crnn, data, optimizer, criterion, device):
     # calculate loss between output and target
     # 藉由輸入每一個橫向pixel的機率值，計算可能變成target的valid alignment 機率值，並將其相加作為loss
     loss = criterion(log_probs, targets, input_lengths, target_lengths)
+
 
     optimizer.zero_grad()
     loss.backward()

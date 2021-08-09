@@ -2,3 +2,4 @@ checkpoints/*
 data/
 pretrain/
 tmp*
+tps_stn_pytorch/

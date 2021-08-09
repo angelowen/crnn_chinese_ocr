@@ -82,8 +82,8 @@ class CRNN(nn.Module):
         conv = conv.permute(2, 0, 1)  # (width, batch, feature)
         seq = self.map_to_seq(conv) # seq: [49, batch, 64]
 
-        recurrent, _ = self.rnn1(seq) # reccur: [49, 3, 512] ,bidirectional will make output size double
-        recurrent, _ = self.rnn2(recurrent) # reccur: [49, 3, 512]
+        recurrent, _ = self.rnn1(seq) # reccur: [49, batch, 512] ,bidirectional will make output size double
+        recurrent, _ = self.rnn2(recurrent) # reccur: [49, batch, 512]
 
         output = self.dense(recurrent)
         return output  # shape: (seq_len, batch, num_class) ,seq_len is equal to img width after convolution

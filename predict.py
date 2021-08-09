@@ -7,6 +7,7 @@ from dataset import TextDataset, text_collate_fn,PredictDataset
 from model import CRNN,ResNet18,ResidualBlock
 from ctc_decoder import ctc_decode 
 from argparse import ArgumentParser
+from utils import TPSSpatialTransformerNetwork
 
 def predict(crnn, dataloader, label2char, decode_method, beam_size):
     crnn.eval()
@@ -18,6 +19,12 @@ def predict(crnn, dataloader, label2char, decode_method, beam_size):
             device = 'cuda' if next(crnn.parameters()).is_cuda else 'cpu'
 
             images = data.to(device)
+            if config['tps-stn']:
+                batch,channel,h,w =images.shape
+                images = images.permute(0,1,3,2)
+                tps = TPSSpatialTransformerNetwork(6, (w, h), (w, h), channel).cuda()
+                images = tps(images)
+
             # cnn + rnn output logits, and find max of logits 
             logits = crnn(images)
             log_probs = torch.nn.functional.log_softmax(logits, dim=2)
@@ -55,7 +62,7 @@ def main():
                         help='set beam size (default: 10)')
     parser.add_argument('--decode_method', type=str, default='beam_search',
                         metavar='greedy, beam_search ,prefix_beam_search' ,help="set decode method (default: beam_search)")
-    parser.add_argument('--checkpoint', type=str, default='./checkpoints/crnn_002000_loss10.827691650390625.pt',
+    parser.add_argument('--checkpoint', type=str, default='./checkpoints/crnn_001600_loss8.485566711425781.pt',
                         help='Reload checkpoint ')
 
     args = parser.parse_args()

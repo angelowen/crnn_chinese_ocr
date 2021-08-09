@@ -7,6 +7,7 @@ common_config = {
     'rnn_hidden': 256,
     'leaky_relu': False,
     'resnet' : False,
+    'tps-stn' : True,
 }
 
 train_config = {
