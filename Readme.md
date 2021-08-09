@@ -1,4 +1,15 @@
-[TOC] 
+Table of contents
+=================
+
+<!--ts-->
+   * [CRNN](#CRNN)
+   * [CTC](#CTC)
+      * [模型架構](#模型架構)
+      * [流程圖](#流程圖)
+   * [STN](#tSTN)
+   * [Usage](#quick demo)
+   
+<!--te-->
 
 # Chinese ocr based on crnn(繁體中文文字辨識)
 The implementation of CRNN (CNN+GRU/LSTM+CTC) for chinese text recognition.
