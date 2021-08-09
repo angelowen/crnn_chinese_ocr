@@ -206,14 +206,14 @@ you can change hyperparameter in `predict.py`
 ## Generate synthetic dataset for Chinese OCR.
 * https://github.com/wang-tf/Chinese_OCR_synthetic_data
 ## Reference
-[1]https://nanonets.com/blog/deep-learning-ocr/
+[1] https://nanonets.com/blog/deep-learning-ocr/
 
-[2]https://github.com/GitYCC/crnn-pytorch
+[2] https://github.com/GitYCC/crnn-pytorch
 
-[3]https://blog.csdn.net/weixin_40546602/article/details/102778029
+[3] https://blog.csdn.net/weixin_40546602/article/details/102778029
 
-[4]https://github.com/wavce/cv_papers/blob/master/OCR/WhatIsWrongInSTR.md
+[4] https://github.com/wavce/cv_papers/blob/master/OCR/WhatIsWrongInSTR.md
 
-[5]https://blog.csdn.net/qq_43270828/article/details/118421155
+[5] https://blog.csdn.net/qq_43270828/article/details/118421155
 
-[6]https://github.com/WarBean/tps_stn_pytorch
+[6] https://github.com/WarBean/tps_stn_pytorch
