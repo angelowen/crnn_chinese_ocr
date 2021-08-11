@@ -1,6 +1,7 @@
 import torch.nn as nn
 import torch
 import torch.nn.functional as F
+from config import train_config as config
 
 class CRNN(nn.Module):
 
@@ -12,9 +13,13 @@ class CRNN(nn.Module):
             self._cnn_backbone(img_channel, img_height, img_width, leaky_relu)
 
         self.map_to_seq = nn.Linear(output_channel * output_height, map_to_seq_hidden)
-
-        self.rnn1 = nn.LSTM(map_to_seq_hidden, rnn_hidden, bidirectional=True)
-        self.rnn2 = nn.LSTM(2 * rnn_hidden, rnn_hidden, bidirectional=True)
+        if config['rnn'] == 'lstm':
+            self.rnn1 = nn.LSTM(map_to_seq_hidden, rnn_hidden, bidirectional=True)
+            self.rnn2 = nn.LSTM(2 * rnn_hidden, rnn_hidden, bidirectional=True)
+        else:
+            self.rnn1 = nn.GRU(map_to_seq_hidden, rnn_hidden, bidirectional=True)
+            self.rnn2 = nn.GRU(2 * rnn_hidden, rnn_hidden, bidirectional=True)
+            
         self.dense = nn.Linear(2 * rnn_hidden, num_class)
 
     def _cnn_backbone(self, img_channel, img_height, img_width, leaky_relu):
@@ -77,11 +82,18 @@ class CRNN(nn.Module):
         # shape of images: (batch, channel, height, width)
 
         conv = self.cnn(images)
+
         batch, channel, height, width = conv.size()# conv: [batch,512,3,49]
         conv = conv.view(batch, channel * height, width) # conv: [3, 1536, 49]
         conv = conv.permute(2, 0, 1)  # (width, batch, feature)
         seq = self.map_to_seq(conv) # seq: [49, batch, 64]
-
+        if config['attention']:
+            seq = seq.permute(1,0,2)
+            if config['rnn'] == 'lstm':
+                self.rnn1 = AttRNN(64, 512*seq.shape[1], batch, 200,True).cuda()
+            else :
+                self.rnn1 = AttRNN(64, 512*seq.shape[1], batch, 200,False).cuda()
+                
         recurrent, _ = self.rnn1(seq) # reccur: [49, batch, 512] ,bidirectional will make output size double
         recurrent, _ = self.rnn2(recurrent) # reccur: [49, batch, 512]
 
@@ -119,8 +131,12 @@ class ResNet18(nn.Module):
         super(ResNet18, self).__init__()
         # self.map = map_to_seq_hidden
         self.map_to_seq = nn.Linear(512*img_height//8, map_to_seq_hidden)
-        self.rnn1 = nn.LSTM(map_to_seq_hidden, rnn_hidden, bidirectional=True)
-        self.rnn2 = nn.LSTM(2 * rnn_hidden, rnn_hidden, bidirectional=True)
+        if config['rnn'] == 'lstm':
+            self.rnn1 = nn.LSTM(map_to_seq_hidden, rnn_hidden, bidirectional=True)
+            self.rnn2 = nn.LSTM(2 * rnn_hidden, rnn_hidden, bidirectional=True)
+        else:
+            self.rnn1 = nn.GRU(map_to_seq_hidden, rnn_hidden, bidirectional=True)
+            self.rnn2 = nn.GRU(2 * rnn_hidden, rnn_hidden, bidirectional=True)
         self.dense = nn.Linear(2 * rnn_hidden, num_class)
         self.inchannel = 64
         self.conv1 = nn.Sequential(
@@ -154,11 +170,82 @@ class ResNet18(nn.Module):
         conv = out.view(batch, channel * height, width) 
         conv = conv.permute(2, 0, 1)
         seq = self.map_to_seq(conv)
+        if config['attention']:
+            seq = seq.permute(1,0,2)
+            if config['rnn'] == 'lstm':
+                self.rnn1 = AttRNN(64, 512*seq.shape[1], batch, 200,True).cuda()
+                # self.rnn2 = AttRNN(512,512*batch,seq.shape[1],200).cuda()
+            else :
+                self.rnn1 = AttRNN(64, 512*seq.shape[1], batch, 200,False).cuda()         
         recurrent, _ = self.rnn1(seq) 
         recurrent, _ = self.rnn2(recurrent) 
         output = self.dense(recurrent)
-        
+        # output = output.permute(1,0,2)
+
         return output
 
+class AttRNN(nn.Module):
+    def __init__(self, input_size, label_size, batch_size, num_layer=1,lstm = True):
+        super(AttRNN, self).__init__()
+        if lstm:
+            self.blstm = torch.nn.LSTM(input_size, input_size, num_layer, bidirectional=True, batch_first=True)
+        else:
+            self.bgru = torch.nn.GRU(input_size, input_size, num_layer, bidirectional=True, batch_first=True)
+        self.lstm = lstm
+        self.h0 = torch.randn(2 * num_layer, batch_size, input_size).cuda()
+        self.c0 = torch.randn(2 * num_layer, batch_size, input_size).cuda()
+        self.softmax = nn.Softmax(dim=2)
+        self.tanh = nn.Tanh()
+        self.batch_size = batch_size
+        self.hidden_size = input_size
+        self.loss = nn.BCELoss()
+        self.w = torch.randn(input_size).cuda()
 
+        self.embedding_dropout = nn.Dropout(0.3)
+        self.lstm_dropout = nn.Dropout(0.3)
+        self.attention_dropout = nn.Dropout(0.5)
 
+        self.fc = nn.Sequential(nn.Linear(input_size, label_size))
+
+    def Att_layer(self, H):
+        M = self.tanh(H)
+        alpha = self.softmax(torch.bmm(M, self.w.repeat(self.batch_size, 1, 1).transpose(1, 2)))
+        res = self.tanh(torch.bmm(alpha.transpose(1,2), H))
+        return res
+
+    def forward(self, x_input):
+        seq_len = x_input.shape[1]
+        x_input = self.embedding_dropout(x_input)
+        if self.lstm:
+            h, _ = self.blstm(x_input, (self.h0, self.c0))
+        else:
+            h, _ = self.bgru(x_input, self.h0)
+        h = h[:,:,self.hidden_size:] + h[:,:,:self.hidden_size]
+        h = self.lstm_dropout(h)
+        atth = self.Att_layer(h)
+        atth = self.attention_dropout(atth)
+        out = self.fc(atth)
+        out = self.softmax(out)
+        return out.view(seq_len,self.batch_size,512),atth
+
+class RNN(nn.Module):
+    def __init__(self,num_class,output_channel,output_height,map_to_seq_hidden=64, rnn_hidden=256,lstm = True):
+        super(RNN, self).__init__()
+        self.lstm = lstm
+        self.map_to_seq = nn.Linear(output_channel * output_height, map_to_seq_hidden)
+
+        self.rnn1 = nn.LSTM(map_to_seq_hidden, rnn_hidden, bidirectional=True)
+        self.rnn2 = nn.LSTM(2 * rnn_hidden, rnn_hidden, bidirectional=True)
+        self.dense = nn.Linear(2 * rnn_hidden, num_class)
+    def forward(self, conv):
+        batch, channel, height, width = conv.size()# conv: [batch,512,3,49]
+        conv = conv.view(batch, channel * height, width) # conv: [3, 1536, 49]
+        conv = conv.permute(2, 0, 1)  # (width, batch, feature)
+        seq = self.map_to_seq(conv) # seq: [49, batch, 64]
+
+        recurrent, _ = self.rnn1(seq) # reccur: [49, batch, 512] ,bidirectional will make output size double
+        recurrent, _ = self.rnn2(recurrent) # reccur: [49, batch, 512]
+
+        output = self.dense(recurrent)
+        
+        return output

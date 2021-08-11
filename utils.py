@@ -132,11 +132,11 @@ class GridGenerator(nn.Module):
 
     def _build_inv_delta_C_primer(self, fiducial, C_primer):
         """
-        計算deltaC'的逆，該矩陣為常量矩陣，在確定了fiducial與C'之後deltaC'也同時被確定
+        計算deltaC'的inverse，該矩陣為常量矩陣，在確定了fiducial與C'之後deltaC'也同時被確定
 
         :param fiducial: 基準點與基本基準點的個數
         :param C_primer: 基本基準點集合C'
-        :return: deltaC'的逆
+        :return: deltaC'的inverse
         """
         # 計算C'梯度公式中的R，R中的元素rij等於dij的平方再乘dij的平方的自然對數，dij是C'中第i個元素與C'中第j個元素的歐式距離，R矩陣是個對稱矩陣
         R = np.zeros((fiducial, fiducial), dtype=float)
@@ -160,7 +160,7 @@ class GridGenerator(nn.Module):
 
     def _build_P_primer_hat(self, fiducial, C_primer, P_primer):
         """
-        求^P'，即論文公式當中由校正後圖片像素坐標經過變換矩陣T後反推得到的原圖像素坐標P集合公式當中的P'帽，P = T^P'
+        求^P'，即論文公式當中由校正後圖片像素坐標經過變換矩陣T後反推得到的原圖像素坐標P集合公式當中的P'hat，P = T^P'
 
         :param fiducial: 基準點與基本基準點的個數
         :param C_primer: 基本基準點集合C'，規模[fiducial, 2]

@@ -3,3 +3,5 @@ data/
 pretrain/
 tmp*
 tps_stn_pytorch/
+att_blstm.py
+org_model.py

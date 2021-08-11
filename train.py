@@ -20,7 +20,7 @@ def train_batch(crnn, data, optimizer, criterion, device):
         images = images.permute(0,1,3,2)
         tps = TPSSpatialTransformerNetwork(6, (w, h), (w, h), channel).cuda()
         images = tps(images)
-
+        
     logits = crnn(images)
     log_probs = torch.nn.functional.log_softmax(logits, dim=2)
 

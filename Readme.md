@@ -9,14 +9,17 @@ Table of contents
    * [STN](#tSTN)
    * [Demo](#Demo)
    * [Training](#Training)
+   * [Model Select](#Model)
    * [Testing](#Testing)
+   * [Result](#Result)
    * [Todo](#Todo)
    * [Reference](#Reference)
    
 <!--te-->
 
 # Chinese ocr based on crnn(繁體中文文字辨識)
-The implementation of CRNN (CNN+GRU/LSTM+CTC) for chinese text recognition.
+* The implementation of CRNN (CNN+GRU/LSTM+CTC) for chinese text recognition.
+* TPS + Resnet + ATT_BiLSTM + CTC
 ## CRNN
 
 模型採用CRNN（Convolutional Recurrent Neural Network，卷積循環神經網絡）作為backbone，參考論文《An End-to-End Trainable Neural Network for Image-based Sequence Recognition and ItsApplication to Scene Text Recognition》提出的方法，解決基於圖像的場景文字序列識別問題，其特點是，
@@ -194,18 +197,32 @@ $Aθ$ 代表的是仿射變換矩陣。其中的成員$θ_i$由localisation netw
 `python train.py`
 
 you can change hyperparameter in `config.py`
-### Special Skills
-1. Training Resnet as backbone insted of VGG -> config.py common_config['resnet']= True 
-2. Using TPS-STN to automatically rectify distorted text images -> config.py common_config['tps-stn']= True
+### Model
+#### config.py  
+1. **config['resnet']= True**
+    * Training Resnet as backbone insted of VGG 
+2. **config['tps-stn']= True**
+    * Using TPS-STN to automatically rectify distorted text images 
+3. **config['attention']= True**
+    * Attention is all you need 
+4. **config['rnn'] = 'lstm' or 'gru'**
+    * select lstm or gru as rnn model
 ## Testing
 `python predict.py --checkpoint XXX.pt`
 
 you can change hyperparameter in `predict.py`
 
+## Result
+
+
+| Model | Training Acc | Test Acc |
+| -------- | -------- | -------- |
+| TPS+Resnet+ATT_BiGRU+CTC(beam)     | Text     | Text     |
+| CNN+LSTM+CTC(greedy)     | Text     | Text     |
+
 ## Todo
 * json讀入 data 到dataloader，圖片Resize長寬及預處理方法選擇
-* 加入pretrain model 訓練
-* lstm+ attention
+* ResNet18->50
 * Decoded Method:
     * greedy
     * beam_search (beam_size=10)
