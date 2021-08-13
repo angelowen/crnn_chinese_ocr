@@ -62,7 +62,7 @@ def main():
                         help='set beam size (default: 10)')
     parser.add_argument('--decode_method', type=str, default='beam_search',
                         metavar='greedy, beam_search ,prefix_beam_search' ,help="set decode method (default: beam_search)")
-    parser.add_argument('--checkpoint', type=str, default='./checkpoints/crnn_001600_loss8.485566711425781.pt',
+    parser.add_argument('--checkpoint', type=str, default='./checkpoints/crnn_100_loss10.306048296798945.pt',
                         help='Reload checkpoint ')
 
     args = parser.parse_args()

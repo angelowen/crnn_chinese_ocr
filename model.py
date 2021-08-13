@@ -2,6 +2,7 @@ import torch.nn as nn
 import torch
 import torch.nn.functional as F
 from config import train_config as config
+from cnn_with_spp import SPP_NET
 
 class CRNN(nn.Module):
 
@@ -82,6 +83,8 @@ class CRNN(nn.Module):
         # shape of images: (batch, channel, height, width)
 
         conv = self.cnn(images)
+        # model = SPP_NET(3)
+        # conv = model(images)
 
         batch, channel, height, width = conv.size()# conv: [batch,512,3,49]
         conv = conv.view(batch, channel * height, width) # conv: [3, 1536, 49]
@@ -94,7 +97,7 @@ class CRNN(nn.Module):
             else :
                 self.rnn1 = AttRNN(64, 512*seq.shape[1], batch, 200,False).cuda()
                 
-        recurrent, _ = self.rnn1(seq) # reccur: [49, batch, 512] ,bidirectional will make output size double
+        recurrent, _ = self.rnn1(seq) # recurr: [49, batch, 512] ,bidirectional will make output size double
         recurrent, _ = self.rnn2(recurrent) # reccur: [49, batch, 512]
 
         output = self.dense(recurrent)
@@ -228,24 +231,3 @@ class AttRNN(nn.Module):
         out = self.softmax(out)
         return out.view(seq_len,self.batch_size,512),atth
 
-class RNN(nn.Module):
-    def __init__(self,num_class,output_channel,output_height,map_to_seq_hidden=64, rnn_hidden=256,lstm = True):
-        super(RNN, self).__init__()
-        self.lstm = lstm
-        self.map_to_seq = nn.Linear(output_channel * output_height, map_to_seq_hidden)
-
-        self.rnn1 = nn.LSTM(map_to_seq_hidden, rnn_hidden, bidirectional=True)
-        self.rnn2 = nn.LSTM(2 * rnn_hidden, rnn_hidden, bidirectional=True)
-        self.dense = nn.Linear(2 * rnn_hidden, num_class)
-    def forward(self, conv):
-        batch, channel, height, width = conv.size()# conv: [batch,512,3,49]
-        conv = conv.view(batch, channel * height, width) # conv: [3, 1536, 49]
-        conv = conv.permute(2, 0, 1)  # (width, batch, feature)
-        seq = self.map_to_seq(conv) # seq: [49, batch, 64]
-
-        recurrent, _ = self.rnn1(seq) # reccur: [49, batch, 512] ,bidirectional will make output size double
-        recurrent, _ = self.rnn2(recurrent) # reccur: [49, batch, 512]
-
-        output = self.dense(recurrent)
-        
-        return output

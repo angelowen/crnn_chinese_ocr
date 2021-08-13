@@ -5,3 +5,5 @@ tmp*
 tps_stn_pytorch/
 att_blstm.py
 org_model.py
+train_org.py
+output.txt

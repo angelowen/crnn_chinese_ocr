@@ -13,6 +13,10 @@ import numpy as np
     img/
         001.jpg
         ...
+    img/test/
+        002.jpg
+        ...
+    valid.txt
     train.txt
     test.txt
 """
@@ -38,7 +42,9 @@ class TextDataset(Dataset):
         imgs,labels = [],[]
         with open(os.path.join(root_dir,txt_path), 'r') as fr:
             for line in fr.readlines():
-                path, label = line.strip().split(',')
+                # print(line)
+                line = line.strip().split(',')
+                path, label = line[0] , line[1]
                 img = os.path.join(root_dir,'img', path)
                 imgs.append(img)
                 labels.append(label)
@@ -94,7 +100,7 @@ class PredictDataset(Dataset):
         imgs = []
         with open(os.path.join(root_dir,txt_path), 'r') as fr:
             for line in fr.readlines():
-                path = line.strip().split(' ')[0]
+                path = line.strip().split(',')[0]
                 img = os.path.join(root_dir,'img_test', path)
                 imgs.append(img)
         return imgs
