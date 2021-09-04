@@ -8,6 +8,7 @@ from scipy.io import wavfile
 import cv2
 from PIL import Image
 import numpy as np
+import matplotlib.pyplot as plt
 """
 ./data
     img/
@@ -57,8 +58,21 @@ class TextDataset(Dataset):
 
         path = self.imgs[index]
         image = Image.open(path).convert('L')  # gray-scale
+        ####
+        (w,h) = image.size
+        split_num = len(self.labels[index])
+        if h>(w*3) and split_num >1 : 
+            for i in range(split_num):
+                im1 = image.crop((0,(h*i)//split_num,w,h*(i+1)//split_num))# (left, top, right, bottom)
+                if i==0:
+                    dst = Image.new('L', (im1.size[0]*split_num,im1.size[1]))
+                dst.paste(im1, (i*im1.size[0], 0))
+            image = dst
+        ###
         image = image.resize((self.img_width, self.img_height), resample=Image.BILINEAR)
         image = np.array(image)
+        # im = Image.fromarray(image)
+        # im.save('save.png')
         image = image.reshape((1, self.img_height, self.img_width))
         image = (image / 127.5) - 1.0
         image = torch.FloatTensor(image)
@@ -66,16 +80,16 @@ class TextDataset(Dataset):
         label = self.labels[index]
         target = [self.CHAR2LABEL[c] for c in label]
         target_length = [len(target)]
-
         target = torch.LongTensor(target)
         target_length = torch.LongTensor(target_length)
         return image, target, target_length
 
 
 def text_collate_fn(batch):
-    images, targets, target_lengths = zip(*batch)
+    images, targets, target_lengths = zip(*batch) 
     images = torch.stack(images, 0)
     targets = torch.cat(targets, 0)
+
     target_lengths = torch.cat(target_lengths, 0)
     return images, targets, target_lengths
 

@@ -57,9 +57,10 @@ class SPP_NET(nn.Module):
         self.fc2 = nn.Linear(4096,1000)
 
     def forward(self,x):
+        
         x = self.conv1(x)
         x = F.leaky_relu(x)
-
+        
         x = self.conv2(x)
         x = F.leaky_relu(self.BN1(x))
 
@@ -69,7 +70,7 @@ class SPP_NET(nn.Module):
         x = self.conv4(x)
 
         spp = spatial_pyramid_pool(x,x.shape[0],[int(x.size(2)),int(x.size(3))],self.output_num)
-        output = spp.view(x.shape[0],512,-1)
+        output = spp.view(x.shape[0],512,5,-1)
 
         return output
 

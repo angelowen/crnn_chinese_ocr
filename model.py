@@ -2,7 +2,6 @@ import torch.nn as nn
 import torch
 import torch.nn.functional as F
 from config import train_config as config
-from cnn_with_spp import SPP_NET
 
 class CRNN(nn.Module):
 
@@ -11,7 +10,7 @@ class CRNN(nn.Module):
         super(CRNN, self).__init__()
 
         self.cnn, (output_channel, output_height, output_width) = \
-            self._cnn_backbone(img_channel, img_height, img_width, leaky_relu)
+                self._cnn_backbone(img_channel, img_height, img_width, leaky_relu)   
 
         self.map_to_seq = nn.Linear(output_channel * output_height, map_to_seq_hidden)
         if config['rnn'] == 'lstm':
@@ -83,8 +82,6 @@ class CRNN(nn.Module):
         # shape of images: (batch, channel, height, width)
 
         conv = self.cnn(images)
-        # model = SPP_NET(3)
-        # conv = model(images)
 
         batch, channel, height, width = conv.size()# conv: [batch,512,3,49]
         conv = conv.view(batch, channel * height, width) # conv: [3, 1536, 49]

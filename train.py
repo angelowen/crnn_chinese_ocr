@@ -45,16 +45,15 @@ def main():
     eval_batch_size = config['eval_batch_size']
     lr = config['lr']
     show_interval = config['show_interval']
-    # valid_interval = config['valid_interval']
     save_interval = config['save_interval']
     cpu_workers = config['cpu_workers']
     reload_checkpoint = config['reload_checkpoint']
-    # valid_max_iter = config['valid_max_iter']
 
     img_width = config['img_width']
     img_height = config['img_height']
     data_dir = config['data_dir']
 
+    best = 0
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     print(f'device: {device}')
 
@@ -112,6 +111,13 @@ def main():
                                       decode_method=config['decode_method'],
                                       beam_size=config['beam_size'])
         print(f'train_loss: {tot_train_loss / tot_train_count} \n','valid_loss={loss}, acc={acc}\n'.format(**evaluation))
+
+        if evaluation['acc'] > best:
+            best = evaluation['acc']
+            save_model_path = os.path.join(config['checkpoints_dir'],
+                                            f'best_model.pt')
+            torch.save(crnn.state_dict(), save_model_path)
+            print("Save best model~")
 
         if epoch % save_interval == 0:
             prefix = 'crnn'
