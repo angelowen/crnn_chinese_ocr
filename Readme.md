@@ -249,3 +249,7 @@ you can change hyperparameter in `predict.py`
 [5] https://blog.csdn.net/qq_43270828/article/details/118421155
 
 [6] https://github.com/WarBean/tps_stn_pytorch
+
+
+tps 沒用
+gru+ resnet+leaky good

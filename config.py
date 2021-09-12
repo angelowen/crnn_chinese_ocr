@@ -1,21 +1,21 @@
 
 common_config = {
-    'data_dir': './data_color', # ./data
+    'data_dir': './data_color', # ./data_color
     'img_width': 200,
     'img_height': 64,
     'map_to_seq_hidden': 64,
     'rnn_hidden': 256,
-    'leaky_relu': False,
+    'leaky_relu': True,
     'tps-stn' : False,
-    'resnet' : False, 
-    'rnn' : 'lstm', #'gru','lstm'   all using bidirectional
+    'resnet' : True, 
+    'rnn' : 'gru', #'gru','lstm'   all using bidirectional
     'attention' : False,
 }
 
 
 train_config = {
     'epochs': 4000,
-    'train_batch_size': 128,
+    'train_batch_size': 64,
     'eval_batch_size': 512,
     'lr': 0.0005,
     'show_interval': 10,

@@ -11,7 +11,7 @@ class CRNN(nn.Module):
 
         self.cnn, (output_channel, output_height, output_width) = \
                 self._cnn_backbone(img_channel, img_height, img_width, leaky_relu)   
-
+        self.rnn_hidden = rnn_hidden
         self.map_to_seq = nn.Linear(output_channel * output_height, map_to_seq_hidden)
         if config['rnn'] == 'lstm':
             self.rnn1 = nn.LSTM(map_to_seq_hidden, rnn_hidden, bidirectional=True)
@@ -90,13 +90,11 @@ class CRNN(nn.Module):
         if config['attention']:
             seq = seq.permute(1,0,2)
             if config['rnn'] == 'lstm':
-                self.rnn1 = AttRNN(64, 512*seq.shape[1], batch, 200,True).cuda()
+                self.rnn1 = AttRNN(64, 2*self.rnn_hidden *seq.shape[1], batch, 200,True).cuda()
             else :
-                self.rnn1 = AttRNN(64, 512*seq.shape[1], batch, 200,False).cuda()
-                
+                self.rnn1 = AttRNN(64, 2*self.rnn_hidden *seq.shape[1], batch, 200,False).cuda()        
         recurrent, _ = self.rnn1(seq) # recurr: [49, batch, 512] ,bidirectional will make output size double
         recurrent, _ = self.rnn2(recurrent) # reccur: [49, batch, 512]
-
         output = self.dense(recurrent)
         return output  # shape: (seq_len, batch, num_class) ,seq_len is equal to img width after convolution
 
@@ -139,6 +137,7 @@ class ResNet18(nn.Module):
             self.rnn2 = nn.GRU(2 * rnn_hidden, rnn_hidden, bidirectional=True)
         self.dense = nn.Linear(2 * rnn_hidden, num_class)
         self.inchannel = 64
+        self.rnn_hidden = rnn_hidden
         self.conv1 = nn.Sequential(
             nn.Conv2d(channel, 64, kernel_size=3, stride=1, padding=1, bias=False),
             nn.BatchNorm2d(64),
@@ -173,10 +172,10 @@ class ResNet18(nn.Module):
         if config['attention']:
             seq = seq.permute(1,0,2)
             if config['rnn'] == 'lstm':
-                self.rnn1 = AttRNN(64, 512*seq.shape[1], batch, 200,True).cuda()
+                self.rnn1 = AttRNN(64, 2*self.rnn_hidden *seq.shape[1], batch, 200,True).cuda()
                 # self.rnn2 = AttRNN(512,512*batch,seq.shape[1],200).cuda()
             else :
-                self.rnn1 = AttRNN(64, 512*seq.shape[1], batch, 200,False).cuda()         
+                self.rnn1 = AttRNN(64, 2*self.rnn_hidden *seq.shape[1], batch, 200,False).cuda()         
         recurrent, _ = self.rnn1(seq) 
         recurrent, _ = self.rnn2(recurrent) 
         output = self.dense(recurrent)
@@ -226,5 +225,6 @@ class AttRNN(nn.Module):
         atth = self.attention_dropout(atth)
         out = self.fc(atth)
         out = self.softmax(out)
-        return out.view(seq_len,self.batch_size,512),atth
+        n = int(out.shape[0]*out.shape[1]*out.shape[2]/seq_len/self.batch_size)
+        return out.view(seq_len,self.batch_size,n),atth
 
